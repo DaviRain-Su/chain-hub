@@ -4,7 +4,7 @@
 >
 > 一个 CLI，接入所有区块链服务，Agent 直接用，不管 SDK、API Key、认证。
 
-_版本：v0.1 — 2026-03-27_
+_版本：v0.2 — 2026-03-27_
 
 ---
 
@@ -675,6 +675,182 @@ Chain Hub 合约本身变成去中心化协议
 Key Vault 完全由 MPC 节点网络运营
 任何人可以运行 Vault 节点，赚取手续费
 Chain Hub 团队不再持有任何特权
+```
+
+---
+
+## 十四、竞品分析：Stripe Projects
+
+### Stripe Projects 是什么
+
+2026年3月26日，Stripe 发布了 **Stripe Projects**——一个嵌入 Stripe CLI 的服务编排工具，让开发者和 AI Agent 能从终端统一接入和管理 Web2 服务（Vercel、Neon、Supabase、Clerk、Chroma 等）。
+
+核心能力：
+```bash
+stripe projects init my-app          # 初始化项目
+stripe projects catalog              # 浏览所有可用服务
+stripe projects add vercel/project   # 接入托管服务
+stripe projects add neon/postgres    # 接入数据库
+stripe projects add clerk/auth       # 接入认证
+stripe projects env --pull           # 把凭证同步到本地 .env
+stripe projects upgrade vercel/pro   # 升级到付费层级
+stripe projects status               # 查看当前服务状态
+```
+
+### Stripe 解决的核心问题
+
+Stripe 原文：
+> "开发者工作流程中最大的安全隐患是密钥泛滥：密钥散落在 Slack 消息、旧的 .env 文件、随机笔记、无人敢碰的半废弃令牌..."
+
+这和 Chain Hub 要解决的问题**完全一致**：凭证（API Key）管理混乱、不安全、对 Agent 不友好。
+
+### Stripe 最关键的设计：Shared Payment Token
+
+```
+用户添加一次信用卡到 Stripe
+    ↓
+升级服务时，Stripe 生成 Shared Payment Token
+    ↓
+Token 安全授权给服务商（Vercel/Neon/Supabase...）
+    ↓
+服务商用 Token 扣款，真实支付凭证从不离开 Stripe
+```
+
+这和 Chain Hub 的 Key Vault 设计**同构**：
+
+```
+Stripe Projects              Chain Hub
+─────────────────────        ─────────────────────────────
+信用卡                       链上钱包（私钥）
+Shared Payment Token         Vault 授权凭证
+服务商用 Token 扣款          协议用授权调用 Index Key
+真实凭证不离开 Stripe         真实 Key 不离开 Vault
+```
+
+**Stripe 在 Web2 轨道验证了这个设计模式的正确性。Chain Hub 把同样的模式搬到链上轨道。**
+
+### 对比
+
+| 维度 | Stripe Projects | Chain Hub |
+|------|----------------|-----------|
+| 目标服务 | Web2（Vercel、Neon、Supabase...） | 区块链协议（DEX、借贷、Bridge、预言机...） |
+| 服务接入 | Stripe 官方 co-design，**封闭** | 任何协议方提交 `protocol.yaml`，**开放** |
+| 凭证管理 | Shared Payment Token → `.env` 同步 | Key Vault（TEE/MPC），Agent 永不持有 Key |
+| 支付 | 法币（Stripe 账单统一结算） | 链上（OKB/代币自动支付） |
+| 地区限制 | 仅美国、欧盟、英国、加拿大 | **全球无限制**，无需 KYC |
+| 用户身份 | Stripe 账号 | 链上钱包（无需注册） |
+| 协议数量 | 十余家精选服务商 | 无限，任何协议都能接入 |
+
+### Chain Hub 的核心优势
+
+**1. 开放 vs 封闭**
+
+Stripe Projects 需要和每一家服务商单独 co-design 集成协议，这是一个极慢的过程，长尾协议永远进不来。Chain Hub 的开放注册表让任何协议 5 分钟内就能接入，不需要联系任何人。
+
+**2. 链上支付 = 无地区限制**
+
+Stripe 原文明确说"支付交接功能仅在美国、欧盟、英国和加拿大开放"。法币支付有监管要求、有 KYC、有地区限制。
+
+链上支付没有这些：任何地方的 Agent，持有任何链上钱包，都能直接使用 Chain Hub 的所有服务。**这是链上轨道对 Web2 轨道最本质的优势。**
+
+**3. 支付天然在链上**
+
+Stripe Projects 里支付还是走 Stripe 的法币轨道，需要额外的支付层。Chain Hub 的支付天然在链上，合约直接结算，没有中间环节。
+
+### 一句话定位
+
+> **Chain Hub = 区块链版的 Stripe Projects，但更开放（任何协议都能接入）、更全球化（无地区限制）、支付天然在链上。**
+
+---
+
+## 十五、借鉴 Stripe Projects 的设计改进
+
+### 改进 1：`provider/service` 命名格式
+
+Stripe 用 `vercel/project`、`neon/postgres` 的格式，比参数更直观、更可组合。
+
+Chain Hub 采用同样格式：
+
+```bash
+# 旧设计
+chainhub swap --protocol uniswap --chain eth --from ETH --to USDC --amount 1
+
+# 新设计（借鉴 Stripe）
+chainhub use uniswap/swap --chain eth --from ETH --to USDC --amount 1
+chainhub add aave/lend
+chainhub add chainlink/price
+chainhub catalog                    # 浏览所有可用协议
+```
+
+### 改进 2：`chainhub.yaml` 项目配置文件
+
+对应 Stripe 的 `.projects` 配置文件——记录"这个 Agent 项目用了哪些链上服务"，让配置可重复、可审计：
+
+```yaml
+# chainhub.yaml
+name: "my-defi-agent"
+version: "1.0.0"
+chains: [xlayer, eth, solana]
+
+services:
+  - okx/dex           # Swap 聚合
+  - aave/lend         # 借贷
+  - chainlink/price   # 价格预言机
+  - thegraph/index    # 链上数据查询
+  - layerzero/bridge  # 跨链桥
+
+vault:
+  mode: shared        # shared | private | agent-owned
+```
+
+Agent 初始化和协作：
+
+```bash
+chainhub init                     # 创建 chainhub.yaml
+chainhub add okx/dex              # 添加协议
+chainhub add aave/lend
+chainhub sync                     # 同步所有协议的访问凭证
+chainhub env --pull               # 同步凭证到本地环境（用于开发测试）
+```
+
+新 Agent 加入已有项目：
+
+```bash
+git clone <agent-repo>            # 拉取代码（含 chainhub.yaml）
+chainhub sync                     # 一条命令同步所有凭证，不需要手动配置
+```
+
+### 改进 3：`status` 和 `upgrade` 命令
+
+```bash
+# 查看当前状态
+chainhub status
+# 输出：
+# ┌─────────────────┬──────────┬────────────┬──────────────┐
+# │ Service         │ Plan     │ Calls/day  │ Status       │
+# ├─────────────────┼──────────┼────────────┼──────────────┤
+# │ okx/dex         │ Free     │ 89/100     │ ✅ Active    │
+# │ aave/lend       │ Free     │ 12/100     │ ✅ Active    │
+# │ chainlink/price │ Pro      │ 1,204/10k  │ ✅ Active    │
+# │ thegraph/index  │ Free     │ 97/100     │ ⚠️ Near limit│
+# └─────────────────┴──────────┴────────────┴──────────────┘
+# Balance: 0.42 OKB (est. 18 days remaining)
+
+# 升级某个服务
+chainhub upgrade thegraph/pro
+# Chain Hub 自动从 Agent 钱包扣取 OKB，无需重新输入支付信息
+```
+
+### 改进 4：`catalog` 替代 `discover`
+
+`discover` 语义是"搜索"，`catalog` 语义是"浏览目录"——两个都有用，分开用：
+
+```bash
+chainhub catalog                      # 浏览所有可用协议（分类展示）
+chainhub catalog --category dex       # 只看 DEX 类协议
+chainhub catalog --chain solana       # 只看 Solana 上的协议
+
+chainhub discover --action swap --from OKB --to USDC  # 按需求搜索最优协议
 ```
 
 ---
