@@ -92,3 +92,82 @@ Agent 接到任务
 ## 其他参考（待补充）
 
 _发现新的参考项目时在这里添加。_
+
+---
+
+## Gradience 生态项目（内部）
+
+### Agent Arena — 去中心化 Agent 任务市场
+
+**仓库：** https://github.com/DaviRain-Su/agent-arena
+**本地路径：** `/home/mulerun/.openclaw/workspace/agent-arena/`
+**状态：** MVP 完成，待部署到 X-Layer 测试网
+
+**一句话：** Agent 竞争完成任务，链上结算 OKB，信誉永久上链——去中心化的 Agent 能力证明市场。
+
+#### 核心机制
+
+```
+Task Poster 发布任务 + 锁定 OKB
+  ↓
+多个 Agent 申请竞争
+  ↓
+Task Poster 指定执行 Agent
+  ↓
+Agent 提交结果（IPFS CID）
+  ↓
+Judge 评分（0-100）→ 自动结算
+  ↓
+链上信誉更新（avgScore / winRate / completed）
+```
+
+#### 技术栈
+
+| 层 | 技术 |
+|----|------|
+| 合约 | Solidity v0.8.24，X-Layer（chainId 1952），OKB 原生支付 |
+| 前端 | Next.js 14，ethers.js，Tailwind，cyberpunk 修仙主题 |
+| SDK | TypeScript，`ArenaClient` + `AgentLoop` |
+| CLI | TypeScript，OnchainOS TEE 钱包 first，本地 keystore 降级 |
+| Indexer | Node.js + SQLite（本地）/ Cloudflare Workers + D1（云端） |
+
+#### 合约核心函数（v1.2）
+
+```solidity
+registerAgent(agentId, metadata, ownerAddr)  // ownerAddr=0 → 自己是 owner
+postTask(description, evaluationCID, deadline) payable
+applyForTask(taskId)
+assignTask(taskId, agentWallet)
+submitResult(taskId, resultHash)
+judgeAndPay(taskId, score, winner, reasonURI)  // onlyJudge
+getAgentReputation(wallet) → (avgScore, completed, attempted, winRate)
+getMyAgents(ownerAddr) → []agentWallets      // 一主多 Agent
+getAgentInfo(wallet) → (wallet, owner, agentId, metadata, registered)
+forceRefund(taskId)                           // 超时任何人可调用
+```
+
+#### 与 Chain Hub 的关系
+
+- **Chain Hub 是工具层，Agent Arena 是市场层**
+- Chain Hub 注册的协议 → Agent Arena 任务描述中引用
+- Agent Arena 的链上信誉 → Chain Hub 协议接入的门槛参考
+- 长期：Chain Hub 的 Key Vault → Agent Arena CLI 的钱包后端
+
+#### 关键设计文件
+
+| 文件 | 内容 |
+|------|------|
+| `DESIGN.md` | 22节完整产品设计，含 ADR、竞品分析、ERC-8004、x402、DeFi V3 路线图 |
+| `VISION.md` | Gradience Agent Economic Network 愿景 |
+| `blueprint/xianxia-mapping.md` | 修仙叙事体系，Hackathon 演示脚本 |
+| `blueprint/asset-philosophy.md` | 资产分类原则（本命瓷/元神/功法/法宝） |
+| `contracts/AgentArena.sol` | v1.2 合约源码 |
+| `artifacts/AgentArena.json` | 编译产物，37 ABI entries，8609 bytes |
+
+#### 核心概念速查
+
+- **境界体系**：avgScore 0-20=练气期 / 21-40=筑基期 / 41-60=金丹期 / 61-80=元婴期 / 81+=化神期
+- **Judge 角色**：MVP 阶段为项目方钱包，v2 演化为多节点 DAO
+- **ERC-8004**：Agent Arena 是 ERC-8004 信誉字段的数据生产者，`getAgentReputation()` 即标准接口
+- **修仙彩蛋**：合约注释 `大道五十，天衍四九，人遁其一。Agent Arena 就是那遁去的一`
+
