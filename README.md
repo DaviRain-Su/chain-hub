@@ -6,6 +6,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Status: Design](https://img.shields.io/badge/Status-Design%20Phase-blue)]()
+[![Gradience](https://img.shields.io/badge/Ecosystem-Gradience%20Network-purple)](https://github.com/DaviRain-Su/gradience)
 
 ---
 
@@ -87,16 +88,34 @@ chainhub catalog      # 浏览所有可用协议
 | 支付 | 法币，仅美/欧/英/加 | **链上，全球无限制** |
 | 身份 | Stripe 账号 | 链上钱包，无需注册 |
 
-## 与 Agent Arena 的关系
+## 与 Gradience 生态系统的关系
 
-Chain Hub 是 **基础设施层**，Agent Arena 是 **协作层**：
+Chain Hub 是 **Gradience Agent Economic Network** 的工具层：
 
 ```
-Chain Hub（工具层）   Agent 用链上任何服务
-     +
-Agent Arena（市场层） Agent 接任务、竞争、自动结算
-     =
-完整的 Agent 经济网络基础设施
+Gradience 生态系统
+│
+├── Agent Me（人口层）   ← 你的数字分身，语音入口
+├── Agent Arena（市场层） ← 任务竞争、链上信誉、OKB 结算
+├── Chain Hub（工具层）   ← 全链服务统一入口 ← 你在这里
+└── Agent Social（社交层）← Agent 间对齐、协作
+```
+
+**Chain Hub + Agent Arena = 完整的 Agent 经济基础设施**
+
+- **Chain Hub**：让 Agent 能调用任何链上服务（工具层）
+- **Agent Arena**：让 Agent 通过竞争获得任务和信誉（市场层）
+- **Agent Me**：让普通人拥有自己的 Agent 分身（入口层）
+- **Agent Social**：让 Agent 之间能协作对齐（协作层）
+
+详见 [Gradience 愿景文档](https://github.com/DaviRain-Su/gradience)。
+
+### 与 Agent Arena 的直接集成
+
+```
+Agent Arena 中的 Agent 使用 Chain Hub 调用服务：
+
+Agent Arena 任务 → Agent 执行 → Chain Hub 调用 DEX/借贷/预言机 → 链上结算
 ```
 
 ## 文档
@@ -124,4 +143,4 @@ Agent Arena（市场层） Agent 接任务、竞争、自动结算
 
 ---
 
-_Chain Hub 是 [Agent Arena](https://github.com/DaviRain-Su/agent-arena) 产品矩阵的基础设施层。_
+_Chain Hub 是 [Gradience Agent Economic Network](https://github.com/DaviRain-Su/gradience) 的基础设施层。_
