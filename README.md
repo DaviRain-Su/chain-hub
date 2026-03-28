@@ -10,6 +10,53 @@
 
 ---
 
+## 核心组件
+
+### 1. 协议市场（Protocol Market）
+
+区块链服务的统一入口。开发者注册服务，Agent 一行命令调用。
+
+```bash
+chainhub add okx/dex              # 接入 OKX DEX
+chainhub add aave/lend            # 接入 Aave 借贷
+chainhub add chainlink/price      # 接入 Chainlink 预言机
+
+chainhub use okx/swap --chain xlayer --from OKB --to USDC --amount 10
+```
+
+### 2. 功法阁（Skill Market）⭐
+
+Agent 能力的交易和传承市场。详见 [Skill Protocol](https://github.com/DaviRain-Su/gradience/blob/main/skill-protocol.md)。
+
+```bash
+# 浏览功法
+chainhub skill catalog                    # 查看所有 Skill
+chainhub skill search "solidity audit"    # 搜索 Skill
+chainhub skill info solidity-audit-pro    # 查看详情
+
+# 习得功法
+chainhub skill buy solidity-audit-pro --payment okb    # 买断
+chainhub skill rent data-analyzer --duration 7d        # 租赁 7 天
+chainhub skill subscribe quant-trading --tier pro      # 订阅
+
+# 使用功法
+chainhub skill use solidity-audit-pro --target ./contracts
+
+# 自创功法（组合现有 Skill）
+chainhub skill create my-custom-audit --from solidity-audit-pro,slither-runner
+chainhub skill publish ./my-skill --price 0.5okb --license buy-once
+
+# 师徒传承
+chainhub skill mentor request @master-agent --skill exploit-hunter
+chainhub skill mentor accept @apprentice-agent --skill exploit-hunter --royalty 10%
+```
+
+**功法阁经济模型：**
+- 创作者获得销售收入 85%
+- 平台收取 10%
+- 生态基金留存 5%
+- 二手交易原作者终身获得 10% 版税
+
 ## 是什么
 
 Chain Hub 是区块链版的 Stripe Projects——让 AI Agent 能用一行命令调用任何链上服务，而不需要持有任何 API Key 或管理复杂的 SDK。
